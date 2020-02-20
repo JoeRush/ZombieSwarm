@@ -36,9 +36,9 @@ Circle.prototype.setZombie = function () {
     this.color = 1;
     this.visualRadius = 500;
     this.speed = 10;
-    this.velocity.x /= 3;
-    this.velocity.y /= 3;
-    this.accel /= 3;
+    this.velocity.x /= 4;
+    this.velocity.y /= 4;
+    this.accel /= 2;
     this.maxS /= 2;
     this.type = "z";
     if(!this.changed) {
@@ -170,7 +170,7 @@ Circle.prototype.update = function () {
             }else if(this.it && !ent.it&& !ent.isGuard.stateG) {
                 var chance = Math.floor((Math.random() * 100) + 1);
                 console.log("the chance is" + chance);
-                if(chance < 50) {
+                if(chance < 65) {
                     ent.setZombie();
                     
 
@@ -255,18 +255,18 @@ Circle.prototype.update = function () {
                     this.velocity.y *= ratio;
                 }
             }
-            // if (this.it && ent.isGuard.stateG && dist > this.radius + ent.radius + 10) {
-            //     var difX = (ent.x - this.x)/dist;
-            //     var difY = (ent.y - this.y)/dist;
-            //     this.velocity.x += difX * this.accel / (dist*dist);
-            //     this.velocity.y += difY * this.accel / (dist * dist);
-            //     var speed = Math.sqrt(this.velocity.x*this.velocity.x + this.velocity.y*this.velocity.y);
-            //     if (speed > this.maxS) {
-            //         var ratio = this.maxS / speed;
-            //         this.velocity.x *= ratio;
-            //         this.velocity.y *= ratio;
-            //     }
-            // }
+            if (this.it && ent.isGuard.stateG && dist > this.radius + ent.radius + 10) {
+                var difX = (ent.x - this.x)/dist;
+                var difY = (ent.y - this.y)/dist;
+                this.velocity.x += difX * this.accel / (dist*dist);
+                this.velocity.y += difY * this.accel / (dist * dist);
+                var speed = Math.sqrt(this.velocity.x*this.velocity.x + this.velocity.y*this.velocity.y);
+                if (speed > this.maxS) {
+                    var ratio = this.maxS / speed;
+                    this.velocity.x *= ratio;
+                    this.velocity.y *= ratio;
+                }
+            }
             if (ent.it && dist > this.radius + ent.radius) {
                 var difX = (ent.x - this.x) / dist;
                 var difY = (ent.y - this.y) / dist;
