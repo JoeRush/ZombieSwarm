@@ -8,7 +8,7 @@ function distance(a, b) {
 }
 
 function Circle(game) {
-    this.player = 1;
+   
     this.radius = 2.5;
     this.maxS = 200;
     this.visualRadius = 25;
@@ -16,7 +16,7 @@ function Circle(game) {
     this.colors = ["Red", "Green", "Blue", "White"];
     this.changed = false;
     Entity.call(this, game, this.radius + Math.random() * (800 - this.radius * 2), this.radius + Math.random() * (800 - this.radius * 2));
-    this.stateOFAccel = 1;
+ 
     
     this.velocity = { x: Math.random() * 1000, y: Math.random() * 1000 };
     this.isGuard = {ammo: 0, stateG: false};
@@ -26,6 +26,7 @@ function Circle(game) {
         this.velocity.x *= ratio;
         this.velocity.y *= ratio;
     }
+    this.typeEnt = "Circle";
 };
 
 Circle.prototype = new Entity();
@@ -298,14 +299,15 @@ Circle.prototype.draw = function (ctx) {
 
 function CountManager(game) {
  
-    this.ZombieLife = 10;
+ 
     this.HumanCountDown = 0;
     this.game = game;
-    this.humanC = 20;
+
     this.type = "c";
     this.ctx = game.ctx;
     this.hasSpawned = false;
-    this.lastSpawn = 0;
+
+    this.typeEnt = "CountManager";
 };
 
 CountManager.prototype.draw = function () {
@@ -411,7 +413,7 @@ var ASSET_MANAGER = new AssetManager();
 ASSET_MANAGER.queueDownload("./img/black.png");
 //ASSET_MANAGER.queueDownload("./img/white.png");
 
-ASSET_MANAGER.downloadAll(function () {
+window.onload = function() {
     console.log("starting up da sheild");
     var canvas = document.getElementById('gameWorld');
     var ctx = canvas.getContext('2d');
@@ -423,10 +425,74 @@ ASSET_MANAGER.downloadAll(function () {
 
 
     gameEngine.addEntity(circle);
-    
-    console.log("human count is now" + gameEngine.humans);
+  
     var countManager = new CountManager(gameEngine);
     gameEngine.addEntity(countManager);
     gameEngine.init(ctx);
     gameEngine.start();
-});
+    var socket = io.connect("http://24.16.255.56:8888");
+
+    socket.on("load", function (data) {
+        console.log(data);
+        console.log("the loaded correctly");
+        gameEngine.entities = [];
+        for(i = 0; i < data.data.length; i++) {
+            entity = data.data[i];
+            if(entity.typeEnt === "CountManager") {
+                var cManager = new CountManager(gameEngine);
+                cManager.HumanCountDown = entity.HCDown;
+                console.log("HCD is " + entity.HCDown);
+                cManager.hasSpawned = entity.hasS; 
+                gameEngine.addEntity(cManager);
+            }else {
+                console.log("circle is being loaded " + entity.color);
+                circle = new Circle(gameEngine);
+                circle.color = entity.color;
+                circle.x = entity.x;
+                circle.y = entity.y;
+                circle.velocity = entity.velocity;
+                circle.isGuard = entity.Guard;
+                circle.it = entity.it;
+                circle.speed = entity.speed;
+                circle.accel = entity.accel;
+              
+                circle.maxS = entity.maxS;
+                circle.changed = entity.changed;
+                circle.visualRadius = entity.vR;
+                circle.type = entity.type;
+                gameEngine.addEntity(circle);
+
+            }
+     
+        }
+    });
+  
+    var text = document.getElementById("text");
+    var saveButton = document.getElementById("save");
+    var loadButton = document.getElementById("load");
+  
+    saveButton.onclick = function () {
+      console.log("save");
+      text.innerHTML = "Saved."
+      var ToSave = [];
+      for(i = 0; i < gameEngine.entities.length; i++) {
+          var savedEnt = gameEngine.entities[i];
+          if(savedEnt.typeEnt === "CountManager") {
+              console.log("hello i am count mana");
+              ToSave.push({typeEnt: savedEnt.typeEnt, HCDown: savedEnt.HumanCountDown, hasS: savedEnt.hasSpawned});
+          }else{
+              ToSave.push({typeEnt: savedEnt.typeEnt, color: savedEnt.color, x: savedEnt.x, y: savedEnt.y, velocity: savedEnt.velocity, Guard: savedEnt.isGuard, it: savedEnt.it,
+                speed: savedEnt.speed, accel: savedEnt.accel, maxS: savedEnt.maxS, changed: savedEnt.changed, vR: savedEnt.visualRadius, type: savedEnt.type});
+          }
+      }
+      socket.emit("save", { studentname: "Joseph Rushford", statename: "assignment3", data: ToSave });
+    };
+  
+    loadButton.onclick = function () {
+      console.log("load");
+      text.innerHTML = "Loaded."
+      socket.emit("load", { studentname: "Joseph Rushford", statename: "assignment3" });
+    };
+
+ 
+};
